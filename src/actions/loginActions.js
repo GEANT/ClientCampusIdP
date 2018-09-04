@@ -1,4 +1,3 @@
-import axios from "axios";
 import jwtdecode from "jwt-decode";
 import { requestToken } from "../utils/auth";
 import { API_TOKEN } from "../utils/strings";
@@ -84,57 +83,3 @@ export const loginUser = (username, password) => {
       });
   };
 };
-
-// Calls the API to get a token and
-// dispatches actions along the way
-export function loginUser2(creds) {
-  let config = {
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    }
-  };
-
-  const username = "mschmidt";
-  const password = "mSchmidt12IAz!";
-  let data = "name=" + username + "&password=" + password;
-
-  let endpoint = "/authenticate";
-
-  return dispatch => {
-    // We dispatch requestLogin to kickoff the call to the API
-    dispatch(requestLogin());
-
-    return axios
-      .post(endpoint, data, config)
-      .then(response => {
-        let token = response.data.token;
-
-        //Check if the response contains a token
-        if (!token)
-          throw new Error("The response does not contain an access token");
-
-        //Check token content
-        let user = parseToken(token);
-
-        //Store token in lokal storage
-        localStorage.setItem(API_TOKEN, token);
-
-        // Dispatch the success action
-        dispatch(receiveLogin(user));
-      })
-      .catch(function(error) {
-        dispatch(loginError(error.message));
-
-        if (error.response) {
-          console.log(error.response.data);
-          console.log(error.response.status);
-          console.log(error.response.headers);
-        } else if (error.request) {
-          console.log(error.request);
-        } else {
-          console.log("Error", error.message);
-        }
-        return Promise.reject(error);
-      });
-  };
-}

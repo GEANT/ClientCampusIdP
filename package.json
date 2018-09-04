@@ -1,10 +1,9 @@
 {
-  "name": "web-client",
+  "name": "campusidp-client",
   "version": "0.1.0",
   "author": "Michael Schmidt",
   "private": true,
   "dependencies": {
-    "axios": "^0.18.0",
     "history": "^4.7.2",
     "jwt-decode": "^2.2.0",
     "prop-types": "^15.6.2",
