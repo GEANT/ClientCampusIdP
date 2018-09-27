@@ -98,7 +98,8 @@ renderField.propTypes = {
   glyp: PropTypes.string,
   labe: PropTypes.string,
   type: PropTypes.string,
-  tipp: PropTypes.string
+  tipp: PropTypes.string,
+  readOnly: PropTypes.bool
 };
 
 export default renderField;

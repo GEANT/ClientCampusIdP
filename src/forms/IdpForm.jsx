@@ -15,6 +15,7 @@ import { connect } from "react-redux";
 import { Field, FieldArray, formValueSelector, reduxForm } from "redux-form";
 import FormButtons from "./FormButtons";
 import renderField from "./renderField";
+import PropTypes from "prop-types";
 
 const auto = "auto generated";
 const contactTypes = {
@@ -68,25 +69,33 @@ const updateProviderURL = (value, previousValue, allValues) => {
 };
 
 let IdpForm = props => {
-  const { handleSubmit, idp, progress, ...rest } = props;
+  const {
+    handleSubmit,
+    idp,
+    progress,
+    change,
+    generateId,
+    generateKeys,
+    ...rest
+  } = props;
 
   const toggleEntityID = (event, value) => {
     if (value) {
-      props.change("idp.entityID", auto);
+      change("idp.entityID", auto);
     } else {
-      props.change("idp.entityID", "");
+      change("idp.entityID", "");
     }
   };
 
   const toggleSSO = (event, value) => {
-    props.change("idp.sso.public", " ");
-    props.change("idp.sso.private", " ");
+    change("idp.sso.public", " ");
+    change("idp.sso.private", " ");
     if (value) {
-      props.change("idp.sso.public", auto);
-      props.change("idp.sso.private", auto);
+      change("idp.sso.public", auto);
+      change("idp.sso.private", auto);
     } else {
-      props.change("idp.sso.public", "");
-      props.change("idp.sso.private", "");
+      change("idp.sso.public", "");
+      change("idp.sso.private", "");
     }
   };
 
@@ -245,9 +254,9 @@ let IdpForm = props => {
                 placeholder="idp.example.org"
                 label="Host URL"
                 onChange={(event, value) =>
-                  props.generateId
+                  generateId
                     ? null
-                    : props.change("idp.entityID", `https://${value}/`)
+                    : change("idp.entityID", `https://${value}/`)
                 }
                 glyph="globe"
                 component={renderField}
@@ -268,7 +277,7 @@ let IdpForm = props => {
                     component="input"
                   />
                 )}
-                readOnly={props.generateId}
+                readOnly={generateId}
                 component={renderField}
                 normalize={updateEntityID}
                 validate={[required, validEntitiyID]}
@@ -287,7 +296,7 @@ let IdpForm = props => {
                     component="input"
                   />
                 )}
-                readOnly={props.generateKeys}
+                readOnly={generateKeys}
                 componentClass="textarea"
                 rows="7"
                 component={renderField}
@@ -307,7 +316,7 @@ let IdpForm = props => {
                     component="input"
                   />
                 )}
-                readOnly={props.generateKeys}
+                readOnly={generateKeys}
                 componentClass="textarea"
                 rows="7"
                 component={renderField}
@@ -348,8 +357,8 @@ IdpForm = reduxForm({
 const selector = formValueSelector("createNewIdP");
 
 function mapStateToProps(state, ownProps) {
-  const generateId = selector(state, "idp.generateID");
-  const generateKeys = selector(state, "idp.sso.generate");
+  const generateId = selector(state, "idp.generateID") ? true : false;
+  const generateKeys = selector(state, "idp.sso.generate") ? true : false;
 
   let init;
   if (ownProps.idp) {
@@ -386,5 +395,12 @@ function mapStateToProps(state, ownProps) {
     generateKeys
   };
 }
+
+IdpForm.propTypes = {
+  generateId: PropTypes.bool.isRequired,
+  generateKeys: PropTypes.bool.isRequired,
+  idp: PropTypes.string,
+  progress: PropTypes.number
+};
 
 export default connect(mapStateToProps)(IdpForm);

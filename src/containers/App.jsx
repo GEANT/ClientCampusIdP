@@ -21,10 +21,9 @@ import Registration from "./Registration";
 
 class App extends React.Component {
   componentDidMount() {
-    const { dispatch, history, isAuthenticated } = this.props;
+    const { dispatch, history } = this.props;
 
-    dispatch(loadToken());
-    if (!isAuthenticated) history.push(ROUTE_ROOT);
+    if (!dispatch(loadToken())) history.push(ROUTE_ROOT);
   }
 
   render() {

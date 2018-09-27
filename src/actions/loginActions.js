@@ -55,9 +55,11 @@ export const loadToken = () => {
       try {
         let user = parseToken(token);
         dispatch(receiveLogin(user));
+        return true;
       } catch (error) {
         localStorage.removeItem(API_TOKEN);
         console.log("Token restore failed, token was deleted");
+        return false;
       }
     }
   };
