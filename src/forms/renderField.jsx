@@ -20,6 +20,7 @@ const renderField = ({
   addon,
   glyph,
   checkbox,
+  button,
   tipp,
   submitting,
   meta: { touched, error, warning },
@@ -61,7 +62,8 @@ const renderField = ({
         type={type}
       />
       {fb(type) && <FormControl.Feedback />}
-      {checkbox && <InputGroup.Addon>{checkbox()}</InputGroup.Addon>}
+      {checkbox && <InputGroup.Addon>{checkbox}</InputGroup.Addon>}
+      {button && <InputGroup.Button>{button}</InputGroup.Button>}
     </InputGroup>
   );
 

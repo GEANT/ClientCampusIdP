@@ -77,7 +77,8 @@ class CreateIdp extends React.Component {
       organization: {
         "@type": "Organization",
         name: values.organization,
-        contacts
+        contacts,
+        logo: values.logo
       },
       components: {
         "@type": "Collection",
@@ -92,8 +93,10 @@ class CreateIdp extends React.Component {
           },
           metadataProviders,
           sso: {
-            "@type": values.idp.sso.generate ? auto : sso
-          }
+            "@type": values.idp.sso.generate ? auto : sso,
+            scopes: values.scopes
+          },
+          timezone: values.timezone
         }
       }
     };

@@ -1,3 +1,4 @@
+import PropTypes from "prop-types";
 import React from "react";
 import {
   Button,
@@ -13,9 +14,10 @@ import {
 } from "react-bootstrap";
 import { connect } from "react-redux";
 import { Field, FieldArray, formValueSelector, reduxForm } from "redux-form";
+import { TIMEZONES } from "../utils/timezones";
+import Checkbox from "./Checkbox";
 import FormButtons from "./FormButtons";
 import renderField from "./renderField";
-import PropTypes from "prop-types";
 
 const auto = "auto generated";
 const contactTypes = {
@@ -86,22 +88,6 @@ let IdpForm = props => {
       change("idp.entityID", "");
     }
   };
-
-  const toggleSSO = (event, value) => {
-    change("idp.sso.public", " ");
-    change("idp.sso.private", " ");
-    if (value) {
-      change("idp.sso.public", auto);
-      change("idp.sso.private", auto);
-    } else {
-      change("idp.sso.public", "");
-      change("idp.sso.private", "");
-    }
-  };
-
-  /*const handleHostChange(event, value) => {
-        
-    }*/
 
   const renderMetadata = ({
     fields,
@@ -217,6 +203,38 @@ let IdpForm = props => {
     </ListGroup>
   );
 
+  const renderScopes = ({ fields, meta: { touched, error, submitFailed } }) => (
+    <React.Fragment>
+      {fields.map((scope, index) => (
+        <Field
+          name={`${scope}.scope`}
+          key={index}
+          type="text"
+          placeholder="example.org"
+          label={`Scope ${index + 1}`}
+          glyph="tag"
+          component={renderField}
+          validate={[required, domain]}
+          button={
+            <Button
+              title="Add"
+              onClick={() => (index ? fields.remove(index) : fields.push())}
+            >
+              <Glyphicon glyph={index ? "trash" : "plus"} />
+            </Button>
+          }
+        />
+      ))}
+    </React.Fragment>
+  );
+
+  //Read time zones from utils/timezones
+  const timezones = Object.keys(TIMEZONES).map((value, index) => (
+    <option key={index} value={TIMEZONES[value]}>
+      {value}
+    </option>
+  ));
+
   return (
     <div className="well well-sm">
       <Form horizontal onSubmit={handleSubmit}>
@@ -233,6 +251,11 @@ let IdpForm = props => {
                 label="Organization"
                 glyph="home"
                 component={renderField}
+              />
+              <Checkbox
+                name="coco"
+                label="Support CoCo"
+                tipp="Checking this box means that the IdPs organization agrees to the GÉANT Code of Conduct."
               />
               <Row className="show-grid">
                 <Col md={2}>
@@ -268,7 +291,7 @@ let IdpForm = props => {
                 placeholder="https://idp.example.org/idp"
                 label="Entity Identifier"
                 addon="@"
-                checkbox={() => (
+                checkbox={
                   <Field
                     name="idp.generateID"
                     type="checkbox"
@@ -276,52 +299,74 @@ let IdpForm = props => {
                     onChange={toggleEntityID}
                     component="input"
                   />
-                )}
+                }
                 readOnly={generateId}
                 component={renderField}
                 normalize={updateEntityID}
                 validate={[required, validEntitiyID]}
               />
+              <FieldArray name="scopes" component={renderScopes} />
               <Field
-                name="idp.sso.public"
-                type="textarea"
-                placeholder={samplePublicKey}
-                label="SSO Public key"
-                glyph="eye-open"
-                checkbox={() => (
-                  <Field
-                    name="idp.sso.generate"
-                    type="checkbox"
-                    onChange={toggleSSO}
-                    component="input"
-                  />
-                )}
-                readOnly={generateKeys}
-                componentClass="textarea"
-                rows="7"
+                name="language"
+                componentClass="select"
+                label="Language"
+                glyph="globe"
+                component={renderField}
+                validate={required}
+              >
+                <option value={contactTypes.admin}>English</option>
+              </Field>
+              <Field
+                name="timezone"
+                componentClass="select"
+                label="Time zone"
+                glyph="time"
+                component={renderField}
+                validate={required}
+              >
+                {timezones}
+              </Field>
+              <Field
+                name="logo"
+                type="text"
+                placeholder="www.example.org/logo.png"
+                label="Logo"
+                glyph="picture"
+                tipp="Logo must have 80x60 pixels"
                 component={renderField}
                 validate={[required]}
               />
-              <Field
-                name="idp.sso.private"
-                type="textarea"
-                placeholder={samplePrivateKey}
-                label="SSO Private key"
-                glyph="eye-close"
-                checkbox={() => (
-                  <Field
-                    name="idp.sso.generate"
-                    type="checkbox"
-                    onChange={toggleSSO}
-                    component="input"
-                  />
-                )}
-                readOnly={generateKeys}
-                componentClass="textarea"
-                rows="7"
-                component={renderField}
-                validate={[required]}
+              <Checkbox
+                name="idp.sso.generate"
+                label="Custom SSO"
+                tipp="SSO keys may be generated server-side, otherwise they must be provided"
               />
+              {generateKeys && (
+                <React.Fragment>
+                  <Field
+                    name="idp.sso.public"
+                    type="textarea"
+                    placeholder={samplePublicKey}
+                    label="SSO Public key"
+                    glyph="eye-open"
+                    componentClass="textarea"
+                    rows="7"
+                    component={renderField}
+                    validate={[required]}
+                  />
+                  <Field
+                    name="idp.sso.private"
+                    type="textarea"
+                    placeholder={samplePrivateKey}
+                    label="SSO Private key"
+                    glyph="eye-close"
+                    componentClass="textarea"
+                    rows="7"
+                    component={renderField}
+                    validate={required}
+                  />
+                </React.Fragment>
+              )}
             </Panel.Body>
           </Panel>
           <FieldArray name="metadataProviders" component={renderMetadata} />
@@ -373,17 +418,16 @@ function mapStateToProps(state, ownProps) {
           contactType: contactTypes.tech
         }
       ],
+      scopes: [{ scope: "" }],
       idp: {
-        generateID: "true",
+        generateID: true,
         entityID: auto,
-        "sso-certificates": auto,
-        "aa-certificates": auto,
         sso: {
-          generate: "true",
-          public: auto,
-          private: auto
+          generate: false
         }
-      }
+      },
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      language: "English"
     };
   }
 
