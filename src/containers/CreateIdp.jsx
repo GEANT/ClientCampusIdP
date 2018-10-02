@@ -93,10 +93,12 @@ class CreateIdp extends React.Component {
           },
           metadataProviders,
           sso: {
-            "@type": values.idp.sso.generate ? auto : sso,
-            scopes: values.scopes
-          },
-          timezone: values.timezone
+            certificates: {
+              "@type": values.idp.sso.generate ? auto : sso
+            },
+            scopes: values.scopes.map(item => item["scope"])
+          }
+          //timezone: values.timezone
         }
       }
     };
