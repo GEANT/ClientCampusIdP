@@ -47,16 +47,13 @@ const apiReducer = (state = initialState, action) => {
         error: action.error
       });
     case DELETE_IDP_FULFILLED: {
-      let idps = state.idps.map(idp => {
-        if (idp.id === action.idpID) idp.state = "Deleted";
-
-        return idp;
-      });
-
       return Object.assign({}, state, {
         isFetching: false,
         idpID: action.idpID,
-        idps
+        idps: state.idps.map(idp => {
+          if (idp.name === action.idpID) idp.status = "deleted";
+          return idp;
+        })
       });
     }
     case GET_IDP_PENDING:
@@ -71,7 +68,10 @@ const apiReducer = (state = initialState, action) => {
     case GET_IDP_FULFILLED: {
       return Object.assign({}, state, {
         isFetching: false,
-        idps: [...state.idps, action.idp]
+        idps: state.idps.map(idp => {
+          if (idp.name === action.idp.name) return action.idp;
+          else return idp;
+        })
       });
     }
     default:
