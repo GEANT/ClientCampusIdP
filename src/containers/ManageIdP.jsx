@@ -19,7 +19,8 @@ import {
   getIdpSuccess,
   listIdps,
   listIdpsSuccessful,
-  requestDeletion
+  requestDeletion,
+  approveIdp
 } from "../actions/apiActions";
 import { callApi } from "../utils/api";
 import { ROUTE_IDP_MANAGE } from "../utils/strings";
@@ -42,54 +43,23 @@ class ManageIdP extends React.Component {
     const { dispatch } = this.props;
 
     this.fetchIdps(dispatch);
-    this.loadIdp(dispatch, "idp.munich.de");
   }
 
   fetchIdps = dispatch => {
     dispatch(listIdps());
 
-    //fetch API
-
-    dispatch(listIdpsSuccessful(this.test()));
-  };
-
-  //TEST ONLY
-  test = () => {
-    let idps = [];
-    let idp = {
-      id: "442",
-      organization: "Example University",
-      contacts: [
-        {
-          contactType: "technical",
-          name: "Jon Doe",
-          email: "jon.doe@example.edu"
-        },
-        {
-          contactType: "support",
-          name: "Jon Doe",
-          email: "jon.doe@example.edu"
-        }
-      ],
-      hostname: "example.edu",
-      idp: {
-        entityID: "https://example.edu/idp",
-        sso: {
-          public: "abcdefgh"
+    return callApi("/idp", null).then(
+      response => {
+        dispatch(listIdpsSuccessful(response.members));
+        for (let idp of response.members) {
+          this.loadIdp(dispatch, idp.name);
         }
       },
-      metadataProviders: [
-        {
-          attrID: "12345",
-          url: "example.provider.eu",
-          publicKey: "yxcvbnm"
-        }
-      ],
-      state: "Pending"
-    };
-    idps.push(idp);
-
-    return idps;
+      error => {
+        dispatch(getIdpError(error.message));
+        console.error(error);
+      }
+    );
   };
 
   closeDeleteDialog = () => {
@@ -111,7 +81,6 @@ class ManageIdP extends React.Component {
   deleteIdP = () => {
     this.props.dispatch(requestDeletion(this.state.idpID));
     this.closeDeleteDialog();
-    alert(`IdP ${this.state.idpID} deleted.`);
   };
 
   getValidationState = () => {
@@ -127,30 +96,16 @@ class ManageIdP extends React.Component {
     else this.setState({ delete: true });
   };
 
-  loadIdp = (dispatch, id) => {
-    dispatch(getIdp(id));
+  loadIdp = (dispatch, name) => {
+    dispatch(getIdp(name));
 
-    return callApi("/idp/" + id, null).then(
+    return callApi("/idp/" + name, null).then(
       response => {
         let idp = {
           id: response._id,
-          organization: "",
-          contacts: [
-            {
-              contactType: "",
-              name: "",
-              email: ""
-            }
-          ],
-          hostname: "",
-          idp: {
-            entityID: "",
-            sso: {
-              public: ""
-            }
-          },
-          metadataProviders: [],
-          state: response.status
+          name: response.name,
+          status: response.status,
+          fetched: true
         };
         dispatch(getIdpSuccess(idp));
       },
@@ -166,25 +121,39 @@ class ManageIdP extends React.Component {
 
     const idpList = idps.map(idp => {
       return (
-        <tr key={idp.id}>
+        <tr key={idp.name}>
           <td>{idp.id}</td>
-          <td>{idp.hostname}</td>
+          <td>{idp.name}</td>
           <td>OpenStack</td>
-          <td>{idp.state}</td>
+          <td>{idp.status}</td>
           <th>
             <ButtonToolbar>
               <ButtonGroup>
                 <Button
-                  onClick={() => history.push(ROUTE_IDP_MANAGE + "/" + idp.id)}
+                  disabled={!idp.fetched}
+                  onClick={() =>
+                    history.push(ROUTE_IDP_MANAGE + "/" + idp.name)
+                  }
                 >
                   <Glyphicon glyph="cog" />
                 </Button>
-                <Button href={idp.idp.entityID}>
+                <Button
+                  disabled={idp.status !== "deployed" || !idp.fetched}
+                  href={idp.name}
+                >
                   <Glyphicon glyph="link" />
                 </Button>
-                <Button onClick={() => this.showDeleteDialog(idp.id)}>
+                <Button
+                  disabled={idp.status !== "deleted" || !idp.fetched}
+                  onClick={() => this.showDeleteDialog(idp.name)}
+                >
                   <Glyphicon glyph="trash" />
                 </Button>
+                {idp.status === "pending" && (
+                  <Button onClick={() => approveIdp(idp.name)}>
+                    <Glyphicon glyph="ok" />
+                  </Button>
+                )}
               </ButtonGroup>
             </ButtonToolbar>
           </th>
@@ -193,7 +162,7 @@ class ManageIdP extends React.Component {
     });
 
     return (
-      <div>
+      <React.Fragment>
         <PageHeader>Manage IdPs</PageHeader>
         <Table striped bordered condensed hover>
           <thead>
@@ -248,7 +217,7 @@ class ManageIdP extends React.Component {
             </Button>
           </Modal.Footer>
         </Modal>
-      </div>
+      </React.Fragment>
     );
   }
 }
