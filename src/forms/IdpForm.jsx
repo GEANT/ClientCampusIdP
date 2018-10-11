@@ -9,7 +9,6 @@ import {
   ListGroup,
   ListGroupItem,
   Panel,
-  ProgressBar,
   Row
 } from "react-bootstrap";
 import { connect } from "react-redux";
@@ -18,6 +17,7 @@ import { TIMEZONES } from "../utils/timezones";
 import Checkbox from "./Checkbox";
 import FormButtons from "./FormButtons";
 import renderField from "./renderField";
+import FileInput from "./FileInput";
 
 const auto = "auto generated";
 const contactTypes = {
@@ -37,7 +37,20 @@ const domain = value =>
   !/^(https:\/\/)?([a-z0-9]+\.)?[a-z0-9][a-z0-9-]*\.[a-z]{2,6}$/i.test(value)
     ? "Invalid address"
     : undefined;
-//const host = (value) => value && !/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/i.test(value) ? 'Invalid hostname (RFC 1123)' : undefined
+const host = value =>
+  value &&
+  !/^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])$/i.test(
+    value
+  )
+    ? "Invalid hostname (RFC 1123)"
+    : undefined;
+const mdp = value =>
+  value &&
+  !/^https:\/\/(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9]).*\.xml$/i.test(
+    value
+  )
+    ? "Invalid metadata provider URL"
+    : undefined;
 //const number = (value) => value && isNaN(Number(value)) ? 'Must be a number' : undefined
 //const text = (value) => value && !/^[a-zA-Z]+$/i.test(value) ? 'Only letters are allowed' : undefined
 const validEntitiyID = value =>
@@ -78,8 +91,11 @@ let IdpForm = props => {
     change,
     generateId,
     generateKeys,
+    generateTLS,
     ...rest
   } = props;
+
+  //const renderImage = logoFile ? URL.createObjectURL(logoFile) : null;
 
   const toggleEntityID = (event, value) => {
     if (value) {
@@ -126,7 +142,7 @@ let IdpForm = props => {
               addon="@"
               component={renderField}
               normalize={updateProviderURL}
-              validate={[required, domain]}
+              validate={[required, mdp]}
             />
             <Field
               name={`${metadataProviders}.publicKey`}
@@ -211,10 +227,11 @@ let IdpForm = props => {
           key={index}
           type="text"
           placeholder="example.org"
-          label={`Scope ${index + 1}`}
+          label="Scope"
           glyph="tag"
           component={renderField}
-          validate={[required, domain]}
+          validate={[required, host]}
+          /* uncomment to allow multiple scopes
           button={
             <Button
               title="Add"
@@ -222,7 +239,7 @@ let IdpForm = props => {
             >
               <Glyphicon glyph={index ? "trash" : "plus"} />
             </Button>
-          }
+          }*/
         />
       ))}
     </React.Fragment>
@@ -245,18 +262,46 @@ let IdpForm = props => {
             </Panel.Heading>
             <Panel.Body>
               <Field
-                name="organization"
+                name="organization.name"
                 type="text"
                 placeholder="University of Europe"
                 label="Organization"
                 glyph="home"
                 component={renderField}
               />
-              <Checkbox
-                name="coco"
-                label="Support CoCo"
-                tipp="Checking this box means that the IdPs organization agrees to the GÉANT Code of Conduct."
+              <Field
+                name="organization.url"
+                type="text"
+                placeholder="university.edu"
+                label="Website"
+                glyph="globe"
+                component={renderField}
+                validate={[required, domain]}
               />
+              <Row>
+                <Col md={2}>
+                  <b>Options</b>
+                </Col>
+                <Col md={2}>
+                  <Field
+                    name="organization.coco"
+                    type="checkbox"
+                    label="Support CoCo"
+                    component="input"
+                  />
+                  &ensp;Support CoCo
+                </Col>
+                <Col md={2}>
+                  <Field
+                    name="organization.entityCategories"
+                    type="checkbox"
+                    label="R&S Entity Categories"
+                    component="input"
+                  />
+                  &ensp;R&S Entity Categories
+                </Col>
+              </Row>
+              <br />
               <Row className="show-grid">
                 <Col md={2}>
                   <strong>Contacts persons:</strong>
@@ -275,7 +320,7 @@ let IdpForm = props => {
                 name="hostname"
                 type="text"
                 placeholder="idp.example.org"
-                label="Host URL"
+                label="FQDN"
                 onChange={(event, value) =>
                   generateId
                     ? null
@@ -283,13 +328,13 @@ let IdpForm = props => {
                 }
                 glyph="globe"
                 component={renderField}
-                validate={[required, domain]}
+                validate={[required, host]}
               />
               <Field
                 name="idp.entityID"
                 type="custom"
                 placeholder="https://idp.example.org/idp"
-                label="Entity Identifier"
+                label="Entity ID"
                 addon="@"
                 checkbox={
                   <Field
@@ -332,9 +377,39 @@ let IdpForm = props => {
                 placeholder="www.example.org/logo.png"
                 label="Logo"
                 glyph="picture"
-                tipp="Logo must have 80x60 pixels"
+                tipp="Enter a valid URL or upload an image from local file system. Logo must have 80x60 pixels"
                 component={renderField}
-                validate={[required]}
+                validate={required}
+                onChange={() => change("logoUpload", "")}
+                checkbox={
+                  <Field
+                    name="logoUpload"
+                    accept="image/*"
+                    onChange={(event, value) => {
+                      change("logo", value.name);
+                    }}
+                    component={FileInput}
+                  />
+                }
+              />
+              <Field
+                name="favicon"
+                type="text"
+                placeholder="www.example.org/favicon.png"
+                label="Favicon"
+                glyph="picture"
+                tipp="Enter a valid URL or upload an image from local file system. Favicon must have 16x16 pixels"
+                component={renderField}
+                validate={required}
+                onChange={() => change("faviconUpload", "")}
+                checkbox={
+                  <Field
+                    name="faviconUpload"
+                    accept="image/*"
+                    onChange={(event, value) => change("favicon", value.name)}
+                    component={FileInput}
+                  />
+                }
               />
               <Checkbox
                 name="idp.sso.generate"
@@ -367,10 +442,42 @@ let IdpForm = props => {
                   />
                 </React.Fragment>
               )}
+              {idp && (
+                <Checkbox
+                  name="idp.web.tls.generate"
+                  label="Custom TLS"
+                  tipp="A TLS is initially created by server-side, but may be replaced by a custom one"
+                />
+              )}
+              {generateTLS && (
+                <React.Fragment>
+                  <Field
+                    name="idp.web.tls.cert"
+                    type="textarea"
+                    placeholder="certificate"
+                    label="Certificate"
+                    glyph="eye-open"
+                    componentClass="textarea"
+                    rows="7"
+                    component={renderField}
+                    validate={required}
+                  />
+                  <Field
+                    name="idp.web.tls.key"
+                    type="textarea"
+                    placeholder={samplePrivateKey}
+                    label="Private key"
+                    glyph="eye-close"
+                    componentClass="textarea"
+                    rows="7"
+                    component={renderField}
+                    validate={required}
+                  />
+                </React.Fragment>
+              )}
             </Panel.Body>
           </Panel>
           <FieldArray name="metadataProviders" component={renderMetadata} />
-          {progress > 0 ? <ProgressBar active now={progress} /> : null}
           <FormButtons
             {...rest}
             submitText={idp ? "Update IdP" : "Create IdP"}
@@ -382,16 +489,12 @@ let IdpForm = props => {
 };
 
 const samplePrivateKey = `-----BEGIN RSA PRIVATE KEY-----
-        pIIVOFMDG+KESnAFV7l2c+cnzRMW0+b6f8mR1CJzZuxVLL6Q02fvLi55/mbSYxECQQDeAw6fiIQX\
-        AkEAxCL5HQb2bQr4ByorcMWm/hEP2MZzROV73yF41hPsRC9m66KrheO9HPTJuo3/9s5p+sqGxOlF\
-        37sJ5QsW+sJyoNde3xH8vdXhzU7eT82D6X/scw9RZz+/6rCJ4p0=
-        -----END RSA PRIVATE KEY-----`;
+pIIVOFMDG+KESnAFV7l2c+cnzRMW0+b6f8mR1CJzZuxVLL6Q02fvLi55/mbSYxECQQDeAw6fiIQXAkEAxCL5HQb2bQr4ByorcMWm/hEP2MZzROV73yF41hPsRC9m66KrheO9HPTJuo3/9s5p+sqGxOlF37sJ5QsW+sJyoNde3xH8vdXhzU7eT82D6X/scw9RZz+/6rCJ4p0=
+-----END RSA PRIVATE KEY-----`;
 
 const samplePublicKey = `-----BEGIN PUBLIC KEY-----
-        MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCqGKukO1De7zhZj6+H0qtjTkVxwTCpvKe4eCZ0\
-        pIIVOFMDG+KESnAFV7l2c+cnzRMW0+b6f8mR1CJzZuxVLL6Q02fvLi55/mbSYxECQQDeAw6fiIQX\
-        3j+skZ6UtW+5u09lHNsj6tQ51s1SPrCBkedbNf0Tp0GbMJDyR4e9
-        -----END PUBLIC KEY-----`;
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCqGKukO1De7zhZj6+H0qtjTkVxwTCpvKe4eCZ0pIIVOFMDG+KESnAFV7l2c+cnzRMW0+b6f8mR1CJzZuxVLL6Q02fvLi55/mbSYxECQQDeAw6fiIQX3j+skZ6UtW+5u09lHNsj6tQ51s1SPrCBkedbNf0Tp0GbMJDyR4e9
+-----END PUBLIC KEY-----`;
 
 IdpForm = reduxForm({
   form: "createNewIdP",
@@ -404,6 +507,7 @@ const selector = formValueSelector("createNewIdP");
 function mapStateToProps(state, ownProps) {
   const generateId = selector(state, "idp.generateID") ? true : false;
   const generateKeys = selector(state, "idp.sso.generate") ? true : false;
+  const generateTLS = selector(state, "idp.web.tls.generate") ? true : false;
 
   let init;
   if (ownProps.idp) {
@@ -436,7 +540,8 @@ function mapStateToProps(state, ownProps) {
   return {
     initialValues,
     generateId,
-    generateKeys
+    generateKeys,
+    generateTLS
   };
 }
 

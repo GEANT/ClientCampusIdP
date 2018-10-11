@@ -27,21 +27,31 @@ class CreateIdp extends React.Component {
     invalidKey: "not a valid PEM key"
   };
 
-  sendRequest = (values, dispatch) => {
+  //Helper function to convert a file to base64
+  base64 = file => {
+    const reader = new FileReader();
+
+    return new Promise((resolve, reject) => {
+      reader.onerror = () => {
+        reader.abort();
+        reject(new DOMException("Problem parsing input file."));
+      };
+
+      reader.onload = () => {
+        resolve(reader.result.slice(23));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  //Submit IdP request to API
+  sendRequest = async (values, dispatch) => {
     this.setState({ submitProgress: 33 });
 
+    //Prepare array of metadata providers
     let metadataProviders = [];
     if (values.metadataProviders !== undefined) {
-      //metadataProviders = JSON.stringify(values.metadataProviders)
       for (let provider of values.metadataProviders) {
-        /*if (!provider.attrID)
-                    provider.attrID = auto
-                provider.attrID = provider.attrID ? provider.attrID : auto
-                provider["@type"] = MetadataProvider
-                provider.publicKey["@type"] = "X509Certificate"*/
-
-        //let attrID = provider.attrID ? provider.attrID : auto
-
         let metadataProvider = {
           "@type": "MetadataProvider",
           attrID: provider.attrID ? provider.attrID : auto,
@@ -56,6 +66,7 @@ class CreateIdp extends React.Component {
       }
     }
 
+    //Prepare array of contact persons
     let contacts = [{ "@type": "Contact", ...values.contact }];
     if (values.contacts !== undefined) {
       for (let contact of values.contacts) {
@@ -71,25 +82,43 @@ class CreateIdp extends React.Component {
     //let ssoPublic = ""
     //let ssoPrivate = ""
 
+    //Convert logo file to BASE64
+    let logo = values.logoUpload
+      ? await this.base64(values.logoUpload)
+      : values.logo;
+
+    //Convert favicon file to BASE64
+    let favicon = values.faviconUpload
+      ? await this.base64(values.faviconUpload)
+      : values.favicon;
+
+    //Prepare JSON body
     let data = {
       "@context": "http://geant.org/capusidp/context",
       "@type": "ServiceDescription",
       organization: {
         "@type": "Organization",
-        name: values.organization,
+        name: values.organization.name,
+        url: values.organization.url,
         contacts,
-        logo: values.logo
+        logo: logo
       },
       components: {
         "@type": "Collection",
         web: {
           "@type": "WebServer",
-          hostname: values.hostname
+          hostname: values.hostname,
+          timezone: values.timezone,
+          favicon: favicon
         },
         idp: {
           "@type": "IdPConf",
           entityID: {
             "@type": values.idp.generateID ? auto : values.idp.entityID
+          },
+          entityCategories: {
+            coco: values.organization.coco,
+            "research-and-scholarship": values.organization.entityCategories
           },
           metadataProviders,
           sso: {
@@ -98,24 +127,22 @@ class CreateIdp extends React.Component {
             },
             scopes: values.scopes.map(item => item["scope"])
           }
-          //timezone: values.timezone
         }
       }
     };
 
     dispatch(submitIdp());
-    this.setState({ submitProgress: 66 });
 
+    //Submit IdP request to API
     return callApi("/idp", data).then(
       response => {
-        this.setState({ submitProgress: 100 });
         dispatch(requestAccepted(response.message));
         this.props.history.push(ROUTE_IDP_MANAGE);
       },
       error => {
-        this.setState({ submitProgress: 0 });
         dispatch(requestDenied(error));
 
+        //Return UI error
         switch (error) {
           case this.API_ERROR.hostConflict:
             throw new SubmissionError({
@@ -135,7 +162,7 @@ class CreateIdp extends React.Component {
   getIdp = (idps, idpID) => {
     let idp = null;
 
-    if (idpID) idp = idps.find(idp => idp.id === idpID);
+    if (idpID) idp = idps.find(idp => idp.name === idpID);
 
     if (idp === undefined) idp = null;
 
