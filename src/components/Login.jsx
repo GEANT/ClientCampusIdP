@@ -56,6 +56,7 @@ export default class Login extends React.Component {
               <FormGroup controlId="formBasicText">
                 <ControlLabel>Username:</ControlLabel>
                 <FormControl
+                  id="user"
                   name="user"
                   type="text"
                   value={this.state.user}
@@ -64,6 +65,7 @@ export default class Login extends React.Component {
                 />
                 <ControlLabel>Password:</ControlLabel>
                 <FormControl
+                  id="pass"
                   name="password"
                   type="password"
                   value={this.state.password}
