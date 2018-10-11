@@ -27,7 +27,7 @@ const FileInput = ({
     </label>
     <input
       id={name}
-      style={{ opacity: 0 }}
+      style={{ display: "none" }}
       onChange={adaptFileEventToValue(onChange)}
       onBlur={adaptFileEventToValue(onBlur)}
       type="file"
