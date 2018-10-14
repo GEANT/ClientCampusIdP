@@ -23,7 +23,6 @@ const FileInput = ({
   <React.Fragment>
     <label htmlFor={name} style={{ margin: 0, padding: 0 }}>
       Browse&nbsp;
-      <Glyphicon glyph="upload" />
     </label>
     <input
       id={name}
