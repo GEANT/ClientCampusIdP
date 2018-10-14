@@ -57,11 +57,27 @@ export function listIdpsSuccessful(idps) {
   };
 }
 
+export const DELETE_IDP_PENDING = "DELETE_IDP_PENDING";
+export function deleteIdp(idpID) {
+  return {
+    type: DELETE_IDP_PENDING,
+    idpID
+  };
+}
+
 export const DELETE_IDP_FULFILLED = "DELETE_IDP_FULFILLED";
-function deleteIdpSuccessful(idpID) {
+export function deleteIdpSuccessful(idpID) {
   return {
     type: DELETE_IDP_FULFILLED,
     idpID
+  };
+}
+
+export const DELETE_IDP_ERROR = "DELETE_IDP_ERROR";
+export function deleteIdpError(error) {
+  return {
+    type: DELETE_IDP_ERROR,
+    error
   };
 }
 
@@ -88,16 +104,6 @@ export function getIdpError(error) {
     error
   };
 }
-
-export const requestDeletion = idpID => {
-  //DELETE Pending
-
-  //DELETE error
-
-  return dispatch => {
-    dispatch(deleteIdpSuccessful(idpID));
-  };
-};
 
 export const APPROVE_IDP_PENDING = "APPROVE_IDP_PENDING";
 export function submitApproval(name) {

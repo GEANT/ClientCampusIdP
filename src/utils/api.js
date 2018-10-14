@@ -1,7 +1,12 @@
 const API_URL = "https://geantsrv15.ct1.garrservices.it";
 const API_TOKEN = "access_token";
 
-export async function callApi(endpoint, data, authenticated = true) {
+export async function callApi(
+  endpoint,
+  data,
+  authenticated = true,
+  method = "POST"
+) {
   let token = localStorage.getItem(API_TOKEN);
   let config = { headers: {} };
 
@@ -13,12 +18,14 @@ export async function callApi(endpoint, data, authenticated = true) {
     config.headers["Authorization"] = `Bearer ${token}`;
   }
 
-  if (data) {
-    config.method = "POST";
+  if (method === "POST") {
+    config.method = method;
     config.headers["Content-Type"] = "application/json";
     config.body = JSON.stringify(data);
-  } else {
-    config.method = "GET";
+  } else if (method === "DELETE") {
+    config.method = method;
+  } else if (method === "GET") {
+    config.method = method;
   }
 
   try {

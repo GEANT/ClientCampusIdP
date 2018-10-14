@@ -19,7 +19,9 @@ import {
   getIdpSuccess,
   listIdps,
   listIdpsSuccessful,
-  requestDeletion,
+  deleteIdp,
+  deleteIdpSuccessful,
+  deleteIdpError,
   approveIdp
 } from "../actions/apiActions";
 import { callApi } from "../utils/api";
@@ -48,7 +50,7 @@ class ManageIdP extends React.Component {
   fetchIdps = dispatch => {
     dispatch(listIdps());
 
-    return callApi("/idp", null).then(
+    return callApi("/idp", null, true, "GET").then(
       response => {
         dispatch(listIdpsSuccessful(response.members));
         for (let idp of response.members) {
@@ -79,8 +81,21 @@ class ManageIdP extends React.Component {
   };
 
   deleteIdP = () => {
-    this.props.dispatch(requestDeletion(this.state.idpID));
-    this.closeDeleteDialog();
+    let name = this.state.idpID;
+    this.props.dispatch(deleteIdp(name));
+
+    return callApi("/idp/" + name, null, true, "DELETE").then(
+      response => {
+        this.props.dispatch(deleteIdpSuccessful(name));
+        console.log(response);
+        this.closeDeleteDialog();
+      },
+      error => {
+        this.props.dispatch(deleteIdpError(name));
+        console.error(error);
+        this.closeDeleteDialog();
+      }
+    );
   };
 
   getValidationState = () => {
@@ -99,7 +114,7 @@ class ManageIdP extends React.Component {
   loadIdp = (dispatch, name) => {
     dispatch(getIdp(name));
 
-    return callApi("/idp/" + name, null).then(
+    return callApi("/idp/" + name, null, true, "GET").then(
       response => {
         let idp = {
           id: response._id,
@@ -144,7 +159,7 @@ class ManageIdP extends React.Component {
                   <Glyphicon glyph="link" />
                 </Button>
                 <Button
-                  disabled={idp.status !== "deleted" || !idp.fetched}
+                  disabled={idp.status === "deleted"}
                   onClick={() => this.showDeleteDialog(idp.name)}
                 >
                   <Glyphicon glyph="trash" />
