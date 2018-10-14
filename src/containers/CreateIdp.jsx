@@ -46,8 +46,6 @@ class CreateIdp extends React.Component {
 
   //Submit IdP request to API
   sendRequest = async (values, dispatch) => {
-    this.setState({ submitProgress: 33 });
-
     //Prepare array of metadata providers
     let metadataProviders = [];
     if (values.metadataProviders !== undefined) {
@@ -58,7 +56,7 @@ class CreateIdp extends React.Component {
           url: provider.url,
           publicKey: {
             "@type": "X509Certificate",
-            "@value": provider.publicKey
+            "@value": provider.cert
           }
         };
 
@@ -67,20 +65,38 @@ class CreateIdp extends React.Component {
     }
 
     //Prepare array of contact persons
-    let contacts = [{ "@type": "Contact", ...values.contact }];
-    if (values.contacts !== undefined) {
-      for (let contact of values.contacts) {
-        let newContact = {
-          "@type": "Contact",
-          ...contact
-        };
-        contacts.push(newContact);
-      }
+    let contacts = [];
+    for (let contact of values.contacts) {
+      let newContact = {
+        "@type": "Contact",
+        ...contact
+      };
+      contacts.push(newContact);
     }
 
-    let sso = auto;
-    //let ssoPublic = ""
-    //let ssoPrivate = ""
+    //Prepare SSO key
+    let sso = values.sso.generate
+      ? [
+          {
+            "@type": "KeyDescriptor",
+            use: "signing",
+            publicKey: {
+              "@type": "X509Certificate",
+              "@value": values.sso.signing.cert
+            },
+            privateKey: values.sso.signing.key
+          },
+          {
+            "@type": "KeyDescriptor",
+            use: "encryption",
+            publicKey: {
+              "@type": "X509Certificate",
+              "@value": values.sso.encryption.cert
+            },
+            privateKey: values.sso.encryption.key
+          }
+        ]
+      : { "@type": auto };
 
     //Convert logo file to BASE64
     let logo = values.logoUpload
@@ -113,18 +129,16 @@ class CreateIdp extends React.Component {
         },
         idp: {
           "@type": "IdPConf",
-          entityID: {
-            "@type": values.idp.generateID ? auto : values.idp.entityID
-          },
+          entityID: values.idp.generateID
+            ? { "@type": auto }
+            : values.idp.entityID,
           entityCategories: {
             coco: values.organization.coco,
             "research-and-scholarship": values.organization.entityCategories
           },
           metadataProviders,
           sso: {
-            certificates: {
-              "@type": values.idp.sso.generate ? auto : sso
-            },
+            certificates: sso,
             scopes: values.scopes.map(item => item["scope"])
           }
         }

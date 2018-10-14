@@ -46,7 +46,7 @@ const host = value =>
     : undefined;
 const mdp = value =>
   value &&
-  !/^https:\/\/(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9]).*\.xml$/i.test(
+  !/^https?:\/\/(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9]).*\.xml$/i.test(
     value
   )
     ? "Invalid metadata provider URL"
@@ -111,10 +111,7 @@ let IdpForm = props => {
   }) => (
     <Panel>
       <Panel.Heading>
-        <Button
-          className="pull-right"
-          onClick={() => fields.push({ url: "https://" })}
-        >
+        <Button className="pull-right" onClick={() => fields.push()}>
           <Glyphicon glyph="plus" /> Add
         </Button>
         <h4>Metadata Providers</h4>
@@ -133,6 +130,7 @@ let IdpForm = props => {
               label="Attribute ID"
               glyph="globe"
               component={renderField}
+              validate={required}
             />
             <Field
               name={`${metadataProviders}.url`}
@@ -141,19 +139,18 @@ let IdpForm = props => {
               label="URL"
               addon="@"
               component={renderField}
-              normalize={updateProviderURL}
               validate={[required, mdp]}
             />
             <Field
-              name={`${metadataProviders}.publicKey`}
-              type="text"
-              label="Public key"
+              name={`${metadataProviders}.cert`}
+              type="textarea"
+              label="Signing Certificate"
               glyph="eye-close"
               componentClass="textarea"
               rows="5"
-              placeholder={samplePublicKey}
+              placeholder={sampleCertificate}
               component={renderField}
-              validate={[required]}
+              validate={required}
             />
           </ListGroupItem>
         ))}
@@ -359,7 +356,7 @@ let IdpForm = props => {
                 component={renderField}
                 validate={required}
               >
-                <option value={contactTypes.admin}>English</option>
+                <option value={"en"}>English</option>
               </Field>
               <Field
                 name="timezone"
@@ -373,7 +370,6 @@ let IdpForm = props => {
               </Field>
               <Field
                 name="logo"
-                type="text"
                 placeholder="www.example.org/logo.png"
                 label="Logo"
                 glyph="picture"
@@ -394,7 +390,6 @@ let IdpForm = props => {
               />
               <Field
                 name="favicon"
-                type="text"
                 placeholder="www.example.org/favicon.png"
                 label="Favicon"
                 glyph="picture"
@@ -412,31 +407,53 @@ let IdpForm = props => {
                 }
               />
               <Checkbox
-                name="idp.sso.generate"
+                name="sso.generate"
                 label="Custom SSO"
                 tipp="SSO keys may be generated server-side, otherwise they must be provided"
               />
               {generateKeys && (
                 <React.Fragment>
                   <Field
-                    name="idp.sso.public"
+                    name="sso.signing.cert"
                     type="textarea"
-                    placeholder={samplePublicKey}
-                    label="SSO Public key"
+                    placeholder={sampleCertificate}
+                    label="Signing Certificate"
                     glyph="eye-open"
                     componentClass="textarea"
-                    rows="7"
+                    rows="5"
                     component={renderField}
-                    validate={[required]}
+                    validate={required}
                   />
                   <Field
-                    name="idp.sso.private"
+                    name="sso.signing.key"
                     type="textarea"
                     placeholder={samplePrivateKey}
-                    label="SSO Private key"
+                    label="Signing Private Key"
                     glyph="eye-close"
                     componentClass="textarea"
-                    rows="7"
+                    rows="5"
+                    component={renderField}
+                    validate={required}
+                  />
+                  <Field
+                    name="sso.encryption.cert"
+                    type="textarea"
+                    placeholder={sampleCertificate}
+                    label="Encryption Certificate"
+                    glyph="eye-open"
+                    componentClass="textarea"
+                    rows="5"
+                    component={renderField}
+                    validate={required}
+                  />
+                  <Field
+                    name="sso.encryption.key"
+                    type="textarea"
+                    placeholder={samplePrivateKey}
+                    label="Encryption Private Key"
+                    glyph="eye-close"
+                    componentClass="textarea"
+                    rows="5"
                     component={renderField}
                     validate={required}
                   />
@@ -492,9 +509,13 @@ const samplePrivateKey = `-----BEGIN RSA PRIVATE KEY-----
 pIIVOFMDG+KESnAFV7l2c+cnzRMW0+b6f8mR1CJzZuxVLL6Q02fvLi55/mbSYxECQQDeAw6fiIQXAkEAxCL5HQb2bQr4ByorcMWm/hEP2MZzROV73yF41hPsRC9m66KrheO9HPTJuo3/9s5p+sqGxOlF37sJ5QsW+sJyoNde3xH8vdXhzU7eT82D6X/scw9RZz+/6rCJ4p0=
 -----END RSA PRIVATE KEY-----`;
 
-const samplePublicKey = `-----BEGIN PUBLIC KEY-----
+const samplePublicKey = `-----BEGIN PUBLIC KEY -----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCqGKukO1De7zhZj6+H0qtjTkVxwTCpvKe4eCZ0pIIVOFMDG+KESnAFV7l2c+cnzRMW0+b6f8mR1CJzZuxVLL6Q02fvLi55/mbSYxECQQDeAw6fiIQX3j+skZ6UtW+5u09lHNsj6tQ51s1SPrCBkedbNf0Tp0GbMJDyR4e9
------END PUBLIC KEY-----`;
+-----END PUBLIC KEY -----`;
+
+const sampleCertificate = `-----BEGIN CERTIFICATE -----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCqGKukO1De7zhZj6+H0qtjTkVxwTCpvKe4eCZ0pIIVOFMDG+KESnAFV7l2c+cnzRMW0+b6f8mR1CJzZuxVLL6Q02fvLi55/mbSYxECQQDeAw6fiIQX3j+skZ6UtW+5u09lHNsj6tQ51s1SPrCBkedbNf0Tp0GbMJDyR4e9
+-----END CERTIFICATE -----`;
 
 IdpForm = reduxForm({
   form: "createNewIdP",
@@ -506,7 +527,7 @@ const selector = formValueSelector("createNewIdP");
 
 function mapStateToProps(state, ownProps) {
   const generateId = selector(state, "idp.generateID") ? true : false;
-  const generateKeys = selector(state, "idp.sso.generate") ? true : false;
+  const generateKeys = selector(state, "sso.generate") ? true : false;
   const generateTLS = selector(state, "idp.web.tls.generate") ? true : false;
 
   let init;
@@ -514,9 +535,6 @@ function mapStateToProps(state, ownProps) {
     init = ownProps.idp;
   } else {
     init = {
-      contact: {
-        contactType: contactTypes.tech
-      },
       contacts: [
         {
           contactType: contactTypes.tech
@@ -525,10 +543,10 @@ function mapStateToProps(state, ownProps) {
       scopes: [{ scope: "" }],
       idp: {
         generateID: true,
-        entityID: auto,
-        sso: {
-          generate: false
-        }
+        entityID: auto
+      },
+      sso: {
+        generate: false
       },
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       language: "English"
