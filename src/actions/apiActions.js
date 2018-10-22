@@ -1,16 +1,3 @@
-import { callApi } from "../utils/api";
-//import { CALL_API } from "../middleware/idpApi";
-
-/*export function createIdp(data) {
-  return {
-    [CALL_API]: {
-      endpoint: "/idp",
-      data,
-      types: [CREATE_IDP_PENDING, CREATE_IDP_FULFILLED, CREATE_IDP_FAILURE]
-    }
-  }
-}*/
-
 export const CREATE_IDP_PENDING = "CREATE_IDP_PENDING";
 export function submitIdp() {
   return {
@@ -58,7 +45,7 @@ export function listIdpsSuccessful(idps) {
 }
 
 export const DELETE_IDP_PENDING = "DELETE_IDP_PENDING";
-export function deleteIdp(idpID) {
+export function submitDeletion(idpID) {
   return {
     type: DELETE_IDP_PENDING,
     idpID
@@ -66,7 +53,7 @@ export function deleteIdp(idpID) {
 }
 
 export const DELETE_IDP_FULFILLED = "DELETE_IDP_FULFILLED";
-export function deleteIdpSuccessful(idpID) {
+export function deletionSuccessful(idpID) {
   return {
     type: DELETE_IDP_FULFILLED,
     idpID
@@ -74,7 +61,7 @@ export function deleteIdpSuccessful(idpID) {
 }
 
 export const DELETE_IDP_ERROR = "DELETE_IDP_ERROR";
-export function deleteIdpError(error) {
+export function deletionError(error) {
   return {
     type: DELETE_IDP_ERROR,
     error
@@ -114,9 +101,10 @@ export function submitApproval(name) {
 }
 
 export const APPROVE_IDP_FULFILLED = "APPROVE_IDP_FULFILLED";
-export function approvalSuccess() {
+export function approvalSuccess(name) {
   return {
-    type: APPROVE_IDP_FULFILLED
+    type: APPROVE_IDP_FULFILLED,
+    name
   };
 }
 
@@ -126,20 +114,4 @@ export function approvalError(error) {
     type: APPROVE_IDP_ERROR,
     error
   };
-}
-
-export function approveIdp(name) {
-  let data = { task: "ansible" };
-
-  return callApi("/tasks/idp/" + name, data).then(
-    response => {
-      //dispatch(requestAccepted(response.message));
-      //this.props.history.push(ROUTE_IDP_MANAGE);
-      console.log(response);
-    },
-    error => {
-      //dispatch(requestDenied(error));
-      console.error(error);
-    }
-  );
 }

@@ -12,4 +12,4 @@ function mapStateToProps(state) {}
 
 ManageFederation.propTypes = {};
 
-export default connect(mapStateToProps)(ManageFederation);
+export default ManageFederation;

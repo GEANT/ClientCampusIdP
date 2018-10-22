@@ -15,7 +15,7 @@ class Registration extends React.Component {
   createUser = (values, dispatch) => {
     dispatch(submitUser());
 
-    return callApi("/users/register", values, false).then(
+    return callApi("/users/register", "POST", values, false).then(
       response => {
         dispatch(userSubmitted(response));
       },

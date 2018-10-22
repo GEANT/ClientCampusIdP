@@ -1,17 +1,4 @@
 import React from "react";
-import PropTypes from "prop-types";
-import {
-  Col,
-  ControlLabel,
-  FormControl,
-  FormGroup,
-  Glyphicon,
-  HelpBlock,
-  InputGroup,
-  Tooltip,
-  OverlayTrigger,
-  Button
-} from "react-bootstrap";
 
 const adaptFileEventToValue = delegate => e => delegate(e.target.files[0]);
 

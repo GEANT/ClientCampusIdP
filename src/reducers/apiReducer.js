@@ -8,7 +8,12 @@ import {
   DELETE_IDP_FULFILLED,
   GET_IDP_PENDING,
   GET_IDP_ERROR,
-  GET_IDP_FULFILLED
+  GET_IDP_FULFILLED,
+  DELETE_IDP_PENDING,
+  DELETE_IDP_ERROR,
+  APPROVE_IDP_PENDING,
+  APPROVE_IDP_FULFILLED,
+  APPROVE_IDP_ERROR
 } from "../actions/apiActions";
 
 const initialState = {
@@ -46,6 +51,18 @@ const apiReducer = (state = initialState, action) => {
         isFetching: false,
         error: action.error
       });
+    case DELETE_IDP_PENDING: {
+      return Object.assign({}, state, {
+        isFetching: true,
+        idpID: action.idpID
+      });
+    }
+    case DELETE_IDP_ERROR: {
+      return Object.assign({}, state, {
+        isFetching: false,
+        error: action.error
+      });
+    }
     case DELETE_IDP_FULFILLED: {
       return Object.assign({}, state, {
         isFetching: false,
@@ -71,6 +88,28 @@ const apiReducer = (state = initialState, action) => {
         idps: state.idps.map(idp => {
           if (idp.name === action.idp.name) return action.idp;
           else return idp;
+        })
+      });
+    }
+    case APPROVE_IDP_PENDING: {
+      return Object.assign({}, state, {
+        isFetching: true,
+        idpID: action.name
+      });
+    }
+    case APPROVE_IDP_ERROR: {
+      return Object.assign({}, state, {
+        isFetching: false,
+        error: action.error
+      });
+    }
+    case APPROVE_IDP_FULFILLED: {
+      return Object.assign({}, state, {
+        isFetching: false,
+        idpID: action.name,
+        idps: state.idps.map(idp => {
+          if (idp.name === action.name) idp.status = "approved";
+          return idp;
         })
       });
     }

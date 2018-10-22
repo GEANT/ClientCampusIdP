@@ -3,9 +3,9 @@ const API_TOKEN = "access_token";
 
 export async function callApi(
   endpoint,
+  method = "POST",
   data,
-  authenticated = true,
-  method = "POST"
+  authenticated = true
 ) {
   let token = localStorage.getItem(API_TOKEN);
   let config = { headers: {} };
@@ -18,14 +18,15 @@ export async function callApi(
     config.headers["Authorization"] = `Bearer ${token}`;
   }
 
-  if (method === "POST") {
-    config.method = method;
-    config.headers["Content-Type"] = "application/json";
-    config.body = JSON.stringify(data);
-  } else if (method === "DELETE") {
-    config.method = method;
-  } else if (method === "GET") {
-    config.method = method;
+  switch (method) {
+    case "POST":
+      config.method = method;
+      config.headers["Content-Type"] = "application/json";
+      config.body = JSON.stringify(data);
+      break;
+    default:
+      config.method = method;
+      break;
   }
 
   try {

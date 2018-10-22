@@ -148,7 +148,7 @@ class CreateIdp extends React.Component {
     dispatch(submitIdp());
 
     //Submit IdP request to API
-    return callApi("/idp", data).then(
+    return callApi("/idp", "POST", data).then(
       response => {
         dispatch(requestAccepted(response.message));
         this.props.history.push(ROUTE_IDP_MANAGE);
@@ -173,6 +173,7 @@ class CreateIdp extends React.Component {
       }
     );
   };
+
   getIdp = (idps, idpID) => {
     let idp = null;
 
@@ -205,7 +206,7 @@ class CreateIdp extends React.Component {
   }
 }
 
-function mapStateToProps(state, routeProps) {
+function mapStateToProps(state) {
   const { authReducer, apiReducer } = state;
   const { isAuthenticated } = authReducer;
   const { idps } = apiReducer;

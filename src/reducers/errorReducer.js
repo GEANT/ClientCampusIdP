@@ -1,4 +1,5 @@
 import { LOGIN_FAILURE } from "../actions/loginActions";
+import { APPROVE_IDP_ERROR } from "../actions/apiActions";
 import { GENERAL_ERROR, HIDE_MESSAGE } from "../actions/errorActions";
 
 const initialState = {
@@ -18,12 +19,19 @@ const errorReducer = (state = initialState, action) => {
         errorMessage: "Login failed, please try again.",
         showError: true
       });
+    case APPROVE_IDP_ERROR:
+      return Object.assign({}, state, {
+        errorMessage: "Approval failed",
+        showError: true
+      });
     case HIDE_MESSAGE:
       return Object.assign({}, state, {
         showError: false
       });
     default:
-      return state;
+      return Object.assign({}, state, {
+        showError: false
+      });
   }
 };
 

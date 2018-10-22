@@ -78,7 +78,7 @@ const renderField = ({
   return (
     <FormGroup
       className="show-grid"
-      controlId="formBasicText"
+      controlId={label}
       validationState={getValidationState()}
     >
       <Col md={2}>
@@ -95,6 +95,7 @@ const renderField = ({
 };
 
 renderField.propTypes = {
+  name: PropTypes.string,
   touched: PropTypes.bool,
   addon: PropTypes.string,
   glyp: PropTypes.string,

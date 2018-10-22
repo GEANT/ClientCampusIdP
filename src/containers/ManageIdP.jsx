@@ -14,15 +14,15 @@ import {
 } from "react-bootstrap";
 import { connect } from "react-redux";
 import {
-  getIdp,
-  getIdpError,
-  getIdpSuccess,
+  submitApproval,
+  approvalSuccess,
+  approvalError,
   listIdps,
   listIdpsSuccessful,
-  deleteIdp,
-  deleteIdpSuccessful,
-  deleteIdpError,
-  approveIdp
+  listIdpsError,
+  submitDeletion,
+  deletionError,
+  deletionSuccessful
 } from "../actions/apiActions";
 import { callApi } from "../utils/api";
 import { ROUTE_IDP_MANAGE } from "../utils/strings";
@@ -42,24 +42,57 @@ class ManageIdP extends React.Component {
   }
 
   componentDidMount() {
-    const { dispatch } = this.props;
-
-    this.fetchIdps(dispatch);
+    this.fetchIdps();
   }
 
-  fetchIdps = dispatch => {
-    dispatch(listIdps());
+  fetchIdps = () => {
+    const { listIdps, listIdpsSuccessful, listIdpsError } = this.props;
+    listIdps();
 
-    return callApi("/idp", null, true, "GET").then(
+    callApi("/idp", "GET").then(
       response => {
-        dispatch(listIdpsSuccessful(response.members));
-        for (let idp of response.members) {
-          this.loadIdp(dispatch, idp.name);
-        }
+        listIdpsSuccessful(response.members);
+        /*for (let idp of response.members) {
+          this.loadIdp(idp.name);
+        }*/
       },
       error => {
-        dispatch(getIdpError(error.message));
-        console.error(error);
+        listIdpsError(error.message);
+      }
+    );
+  };
+
+  loadIdp = name => {
+    const { getIdp, getIdpSuccess, getIdpError } = this.props;
+    getIdp(name);
+
+    return callApi("/idp/" + name, "GET").then(
+      response => {
+        let idp = {
+          id: response._id,
+          name: response.name,
+          status: response.status,
+          fetched: true
+        };
+        getIdpSuccess(idp);
+      },
+      error => {
+        getIdpError(error.message);
+      }
+    );
+  };
+
+  approveIdp = name => {
+    const { submitApproval, approvalSuccess, approvalError } = this.props;
+    const data = { task: "ansible" };
+
+    submitApproval(name);
+    callApi("/tasks/idp/" + name, "POST", data).then(
+      response => {
+        approvalSuccess(name);
+      },
+      error => {
+        approvalError(error);
       }
     );
   };
@@ -80,20 +113,16 @@ class ManageIdP extends React.Component {
     });
   };
 
-  deleteIdP = () => {
-    let name = this.state.idpID;
-    this.props.dispatch(deleteIdp(name));
-
-    return callApi("/idp/" + name, null, true, "DELETE").then(
+  deleteIdp = name => {
+    const { submitDeletion, deletionSuccessful, deletionError } = this.props;
+    submitDeletion(name);
+    callApi("/idp/" + name, "DELETE").then(
       response => {
-        this.props.dispatch(deleteIdpSuccessful(name));
-        console.log(response);
+        deletionSuccessful(name);
         this.closeDeleteDialog();
       },
       error => {
-        this.props.dispatch(deleteIdpError(name));
-        console.error(error);
-        this.closeDeleteDialog();
+        deletionError(error);
       }
     );
   };
@@ -109,26 +138,6 @@ class ManageIdP extends React.Component {
     if (value.target.value === this.deleteString)
       this.setState({ delete: false });
     else this.setState({ delete: true });
-  };
-
-  loadIdp = (dispatch, name) => {
-    dispatch(getIdp(name));
-
-    return callApi("/idp/" + name, null, true, "GET").then(
-      response => {
-        let idp = {
-          id: response._id,
-          name: response.name,
-          status: response.status,
-          fetched: true
-        };
-        dispatch(getIdpSuccess(idp));
-      },
-      error => {
-        dispatch(getIdpError(error.message));
-        console.error(error);
-      }
-    );
   };
 
   render() {
@@ -165,7 +174,7 @@ class ManageIdP extends React.Component {
                   <Glyphicon glyph="trash" />
                 </Button>
                 {idp.status === "pending" && (
-                  <Button onClick={() => approveIdp(idp.name)}>
+                  <Button onClick={() => this.approveIdp(idp.name)}>
                     <Glyphicon glyph="ok" />
                   </Button>
                 )}
@@ -175,6 +184,50 @@ class ManageIdP extends React.Component {
         </tr>
       );
     });
+
+    //Delete IdP dialog
+    const dialog = (
+      <Modal show={this.state.showDialog} onHide={this.closeDeleteDialog}>
+        <Modal.Header closeButton>
+          <Modal.Title>Delete IdP</Modal.Title>
+        </Modal.Header>
+
+        <Modal.Body>
+          Do you really want to delete IdP "{this.state.idpID}
+          "?
+          <br />
+          <br />
+          <form>
+            <FormGroup
+              controlId="formBasicText"
+              validationState={this.getValidationState()}
+            >
+              <ControlLabel>
+                Enter {this.deleteString} to confirm the deletion:
+              </ControlLabel>
+              <FormControl
+                type="text"
+                value={this.state.formValue}
+                placeholder={this.deleteString}
+                onChange={this.handleChange}
+              />
+              <FormControl.Feedback />
+            </FormGroup>
+          </form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button onClick={this.closeDeleteDialog}>Close</Button>
+          <Button
+            bsStyle="primary"
+            disabled={this.state.delete}
+            onClick={() => this.deleteIdp(this.state.idpID)}
+          >
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
 
     return (
       <React.Fragment>
@@ -191,47 +244,7 @@ class ManageIdP extends React.Component {
           </thead>
           <tbody>{idpList}</tbody>
         </Table>
-
-        <Modal show={this.state.showDialog} onHide={this.closeDeleteDialog}>
-          <Modal.Header closeButton>
-            <Modal.Title>Delete IdP</Modal.Title>
-          </Modal.Header>
-
-          <Modal.Body>
-            Do you really want to delete IdP "{this.state.idpID}
-            "?
-            <br />
-            <br />
-            <form>
-              <FormGroup
-                controlId="formBasicText"
-                validationState={this.getValidationState()}
-              >
-                <ControlLabel>
-                  Enter {this.deleteString} to confirm the deletion:
-                </ControlLabel>
-                <FormControl
-                  type="text"
-                  value={this.state.formValue}
-                  placeholder={this.deleteString}
-                  onChange={this.handleChange}
-                />
-                <FormControl.Feedback />
-              </FormGroup>
-            </form>
-          </Modal.Body>
-
-          <Modal.Footer>
-            <Button onClick={this.closeDeleteDialog}>Close</Button>
-            <Button
-              bsStyle="primary"
-              disabled={this.state.delete}
-              onClick={this.deleteIdP}
-            >
-              Delete
-            </Button>
-          </Modal.Footer>
-        </Modal>
+        {dialog}
       </React.Fragment>
     );
   }
@@ -250,9 +263,30 @@ function mapStateToProps(state) {
 }
 
 ManageIdP.propTypes = {
-  dispatch: PropTypes.func.isRequired,
   isAuthenticated: PropTypes.bool.isRequired,
-  idps: PropTypes.arrayOf(PropTypes.object).isRequired
+  idps: PropTypes.arrayOf(PropTypes.object).isRequired,
+  listIdps: PropTypes.func.isRequired,
+  listIdpsSuccessful: PropTypes.func.isRequired,
+  listIdpsError: PropTypes.func.isRequired,
+  submitDeletion: PropTypes.func.isRequired,
+  deletionSuccessful: PropTypes.func.isRequired,
+  deletionError: PropTypes.func.isRequired,
+  submitApproval: PropTypes.func.isRequired,
+  approvalSuccess: PropTypes.func.isRequired,
+  approvalError: PropTypes.func.isRequired
 };
 
-export default connect(mapStateToProps)(ManageIdP);
+export default connect(
+  mapStateToProps,
+  {
+    listIdps,
+    listIdpsSuccessful,
+    listIdpsError,
+    submitDeletion,
+    deletionSuccessful,
+    deletionError,
+    submitApproval,
+    approvalSuccess,
+    approvalError
+  }
+)(ManageIdP);
