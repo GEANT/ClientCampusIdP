@@ -16,6 +16,9 @@ const NavigationContent = () => {
           <MenuItem eventKey={"navigation_content_3"}>Manage IdP's</MenuItem>
         </LinkContainer>
       </NavDropdown>
+      <LinkContainer to="/federation">
+        <MenuItem eventKey={"navigation_content_4"}>Federation</MenuItem>
+      </LinkContainer>
     </React.Fragment>
   );
 };

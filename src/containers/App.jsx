@@ -18,6 +18,7 @@ import { ROUTE_ROOT } from "../utils/strings";
 import CreateIdp from "./CreateIdp";
 import ManageIdP from "./ManageIdP";
 import Registration from "./Registration";
+import ManageFederation from "./ManageFederation";
 
 class App extends React.Component {
   componentDidMount() {
@@ -59,9 +60,10 @@ class App extends React.Component {
           <Route path="/idp/create" component={CreateIdp} />
           <Route path="/idp/manage/:id" component={CreateIdp} />
           <Route path="/idp/manage" component={ManageIdP} />
-          <Route path="/user/register" component={Registration} />
+          <Route path="/federation" component={ManageFederation} />
           <Route path="/user/profile" component={UserProfile} />
           <Route path="/user/settings" component={UserSettings} />
+          <Route path="/user/register" component={Registration} />
           <Route path="/about/what" component={About} />
           <Route path="/about/organisations" component={Organisations} />
           <Route path="/about/federations" component={Federations} />
@@ -71,9 +73,6 @@ class App extends React.Component {
     );
   }
 }
-
-//<Redirect to="/error" />
-//<Route path="/error" render={(title, error) => <Exception header={title} text={error} />} />
 
 function mapStateToProps(state) {
   const { authReducer, errorReducer } = state;
