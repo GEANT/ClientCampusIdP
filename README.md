@@ -8,12 +8,18 @@ Node package manager: [npm](https://www.npmjs.com/)
 
 ## Usage
 
-Install dependencies
+### Configure end point
+
+Configure API end point overriding `.env` file with your API server address. Read more about [Adding Custom Environment Variables](https://facebook.github.io/create-react-app/docs/adding-custom-environment-variables) in the official React page.
+
+### Install dependencies
+
 ```sh
 npm install
 ```
 
-Run locally
+### Run locally
+
 ```sh
 npm start
 ```
