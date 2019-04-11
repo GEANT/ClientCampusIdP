@@ -1,5 +1,5 @@
-const AUTH_URL = "https://geantsrv15.ct1.garrservices.it"
-const AUTH_ENDPOINT = "/authenticate"
+const AUTH_URL = process.env.REACT_APP_API_URL;
+const AUTH_ENDPOINT = "/authenticate";
 
 export async function requestToken(username, password) {
 

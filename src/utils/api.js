@@ -1,4 +1,4 @@
-const API_URL = "https://geantsrv15.ct1.garrservices.it";
+const API_URL = process.env.REACT_APP_API_URL;
 const API_TOKEN = "access_token";
 
 export async function callApi(
